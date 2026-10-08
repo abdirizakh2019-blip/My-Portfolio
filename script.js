@@ -101,7 +101,12 @@ if(!isTouchDevice){
 
         const maxTilt = card.classList.contains('profile-card') ? 14 : 8;
 
+        let tiltFrame = null;
+
         card.addEventListener('mousemove', (e) => {
+
+            if(tiltFrame) return;
+            tiltFrame = requestAnimationFrame(() => { tiltFrame = null; });
 
             const rect = card.getBoundingClientRect();
             const x = e.clientX - rect.left;
@@ -169,7 +174,7 @@ if(backToTop){
             backToTop.classList.remove('show');
         }
 
-    });
+    }, { passive:true });
 
     backToTop.addEventListener('click', (e) => {
         e.preventDefault();
@@ -274,11 +279,26 @@ PORTFOLIO: INLINE LIVE DEMO PREVIEW
 const demoToggleBtns = document.querySelectorAll('.demo-toggle-btn');
 const demoCloseBtns = document.querySelectorAll('.demo-close');
 
+/* Removing the src stops the embedded site from running in the background */
+function unloadDemoIframe(panel){
+
+    const iframe = panel.querySelector('iframe');
+    const loading = panel.querySelector('.demo-loading');
+
+    if(iframe && iframe.getAttribute('src')){
+        iframe.removeAttribute('src');
+        iframe.classList.remove('loaded');
+        if(loading) loading.style.display = '';
+    }
+
+}
+
 function closeAllDemos(exceptId){
 
     document.querySelectorAll('.demo-preview.open').forEach(panel => {
         if(panel.id !== exceptId){
             panel.classList.remove('open');
+            unloadDemoIframe(panel);
         }
     });
 
@@ -299,14 +319,14 @@ function loadDemoIframe(panel, url){
     const iframe = panel.querySelector('iframe');
     const loading = panel.querySelector('.demo-loading');
 
-    if(iframe && !iframe.src){
+    if(iframe && !iframe.getAttribute('src')){
 
         iframe.src = url;
 
         iframe.addEventListener('load', () => {
             iframe.classList.add('loaded');
             if(loading) loading.style.display = 'none';
-        });
+        }, { once:true });
 
         // Fallback: if blocked by X-Frame-Options, stop showing spinner after a timeout
         setTimeout(() => {
@@ -334,6 +354,7 @@ demoToggleBtns.forEach(btn => {
 
         if(isOpen){
             panel.classList.remove('open');
+            unloadDemoIframe(panel);
             btn.classList.remove('active');
             btn.querySelector('.btn-label').textContent = 'Live Demo';
         }else{
@@ -359,7 +380,10 @@ demoCloseBtns.forEach(btn => {
         const panel = document.getElementById(targetId);
         const toggleBtn = document.querySelector(`.demo-toggle-btn[data-target="${targetId}"]`);
 
-        if(panel) panel.classList.remove('open');
+        if(panel){
+            panel.classList.remove('open');
+            unloadDemoIframe(panel);
+        }
 
         if(toggleBtn){
             toggleBtn.classList.remove('active');
@@ -747,15 +771,17 @@ mobile/tablet via a scroll-driven idle flight path)
 ===================== */
 
 const birdMascot = document.getElementById('birdMascot');
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-if(birdMascot){
+/* Desktop only: on phones the bird is hidden (see style.css) to keep scrolling smooth */
+if(birdMascot && !isTouchDevice && !reduceMotion && window.innerWidth > 768){
 
     let mouseX = window.innerWidth * 0.7;
     let mouseY = window.innerHeight * 0.25;
     let birdX = mouseX;
     let birdY = mouseY;
     let lastBirdX = birdX;
-    let driftAngle = 0;
+    let birdFrame = null;
 
     const offsetX = 40;
     const offsetY = 50;
@@ -779,77 +805,41 @@ if(birdMascot){
 
         lastBirdX = birdX;
 
-        let drawX = birdX;
-        let drawY = birdY;
+        birdMascot.style.transform = `translate(${birdX}px, ${birdY}px)`;
 
-        if(isTouchDevice){
-            // Subtle idle drift so the bird doesn't look frozen between scrolls
-            driftAngle += 0.6;
-            drawX += Math.sin(driftAngle * 0.05) * 18;
-            drawY += Math.cos(driftAngle * 0.08) * 10;
+        // Stop the loop once the bird has arrived; it restarts on the next move
+        if(Math.abs(targetX - birdX) < 0.5 && Math.abs(targetY - birdY) < 0.5){
+            birdFrame = null;
+            return;
         }
 
-        birdMascot.style.transform = `translate(${drawX}px, ${drawY}px)`;
-
-        requestAnimationFrame(animateBird);
+        birdFrame = requestAnimationFrame(animateBird);
 
     }
 
-    requestAnimationFrame(animateBird);
+    function wakeBird(){
+        if(!birdFrame) birdFrame = requestAnimationFrame(animateBird);
+    }
 
-    if(!isTouchDevice){
+    wakeBird();
 
-        /* DESKTOP / MOUSE DEVICES: bird follows the cursor */
+    document.addEventListener('mousemove', (e) => {
+        mouseX = e.clientX;
+        mouseY = e.clientY;
+        wakeBird();
+    }, { passive:true });
 
-        document.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = e.clientY;
-        });
+    // Gently nudge the bird toward the section being scrolled into view,
+    // so it feels like it's pointing toward the content.
+    let scrollNudgeTimeout = null;
+    const sections = document.querySelectorAll('section[id], section.hero');
 
-        // Gently nudge the bird toward the section being scrolled into view,
-        // so it feels like it's pointing toward the content.
-        let scrollNudgeTimeout = null;
+    window.addEventListener('scroll', () => {
 
-        window.addEventListener('scroll', () => {
+        clearTimeout(scrollNudgeTimeout);
 
-            clearTimeout(scrollNudgeTimeout);
+        scrollNudgeTimeout = setTimeout(() => {
 
-            scrollNudgeTimeout = setTimeout(() => {
-
-                const sections = document.querySelectorAll('section[id], section.hero');
-                let closest = null;
-                let closestDistance = Infinity;
-
-                sections.forEach(section => {
-                    const rect = section.getBoundingClientRect();
-                    const distance = Math.abs(rect.top);
-                    if(distance < closestDistance){
-                        closestDistance = distance;
-                        closest = section;
-                    }
-                });
-
-                if(closest){
-                    const rect = closest.getBoundingClientRect();
-                    mouseX = rect.left + rect.width * 0.78;
-                    mouseY = Math.max(90, rect.top + 70);
-                }
-
-                mouseX = Math.min(Math.max(mouseX, 40), window.innerWidth - 40);
-                mouseY = Math.min(Math.max(mouseY, 70), window.innerHeight - 70);
-
-            }, 120);
-
-        });
-
-    }else{
-
-        /* TOUCH DEVICES (mobile/tablet): no mouse exists, so the bird
-           flies to a point near the top of whichever section is in view. */
-
-        function updateTouchTarget(){
-
-            const sections = document.querySelectorAll('section[id], section.hero');
             let closest = null;
             let closestDistance = Infinity;
 
@@ -862,35 +852,19 @@ if(birdMascot){
                 }
             });
 
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-
             if(closest){
                 const rect = closest.getBoundingClientRect();
-                mouseX = Math.min(vw - 50, rect.left + rect.width * 0.74);
-                mouseY = Math.max(80, rect.top + 60);
-            }else{
-                mouseX = vw * 0.7;
-                mouseY = 90;
+                mouseX = rect.left + rect.width * 0.78;
+                mouseY = Math.max(90, rect.top + 70);
             }
 
-            // Always keep the target within the visible viewport
-            mouseX = Math.min(Math.max(mouseX, 40), vw - 40);
-            mouseY = Math.min(Math.max(mouseY, 70), vh - 70);
+            mouseX = Math.min(Math.max(mouseX, 40), window.innerWidth - 40);
+            mouseY = Math.min(Math.max(mouseY, 70), window.innerHeight - 70);
 
-        }
+            wakeBird();
 
-        let touchScrollTimeout = null;
+        }, 120);
 
-        window.addEventListener('scroll', () => {
-            clearTimeout(touchScrollTimeout);
-            touchScrollTimeout = setTimeout(updateTouchTarget, 100);
-        });
-
-        window.addEventListener('resize', updateTouchTarget);
-
-        updateTouchTarget();
-
-    }
+    }, { passive:true });
 
 }

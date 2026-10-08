@@ -206,7 +206,7 @@ data-aos="fade-right">
 
 <div class="about-card tilt-3d">
 
-<img src="images/sawirkeyga-.png"
+<img src="images/sawirkeyga-.png" loading="lazy" decoding="async"
 alt="Abdirizakh">
 
 </div>
@@ -296,12 +296,15 @@ View Portfolio
 SCRIPTS
 ===================== -->
 
-<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
+<script defer src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 
 <script>
-AOS.init({
-duration:1200,
-once:true
+document.addEventListener('DOMContentLoaded',function(){
+if(window.AOS) AOS.init({
+duration:800,
+once:true,
+disable:window.innerWidth<768
+});
 });
 </script>
 
@@ -906,6 +909,57 @@ Start a Project
 </div>
 </div>
 
+<div class="demo-preview" id="demo-8">
+<div class="demo-preview-inner">
+<div class="demo-preview-bar">
+<span class="demo-dot"></span>
+<span class="demo-dot"></span>
+<span class="demo-dot"></span>
+<span class="demo-url">daryeeldemo.bastamiagency.com</span>
+<a href="http://daryeeldemo.bastamiagency.com/" target="_blank" rel="noopener" class="demo-open-tab" title="Open in new tab"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+<button class="demo-close" data-target="demo-8"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<div class="demo-iframe-box">
+<div class="demo-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading preview...</div>
+<iframe loading="lazy" title="DaryeelMedical preview"></iframe>
+</div>
+</div>
+</div>
+
+<div class="demo-preview" id="demo-9">
+<div class="demo-preview-inner">
+<div class="demo-preview-bar">
+<span class="demo-dot"></span>
+<span class="demo-dot"></span>
+<span class="demo-dot"></span>
+<span class="demo-url">socdaalplus.com</span>
+<a href="https://socdaalplus.com" target="_blank" rel="noopener" class="demo-open-tab" title="Open in new tab"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+<button class="demo-close" data-target="demo-9"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<div class="demo-iframe-box">
+<div class="demo-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading preview...</div>
+<iframe loading="lazy" title="SocdaalPlus preview"></iframe>
+</div>
+</div>
+</div>
+
+<div class="demo-preview" id="demo-10">
+<div class="demo-preview-inner">
+<div class="demo-preview-bar">
+<span class="demo-dot"></span>
+<span class="demo-dot"></span>
+<span class="demo-dot"></span>
+<span class="demo-url">digaal.com</span>
+<a href="https://digaal.com" target="_blank" rel="noopener" class="demo-open-tab" title="Open in new tab"><i class="fa-solid fa-arrow-up-right-from-square"></i></a>
+<button class="demo-close" data-target="demo-10"><i class="fa-solid fa-xmark"></i></button>
+</div>
+<div class="demo-iframe-box">
+<div class="demo-loading"><i class="fa-solid fa-spinner fa-spin"></i> Loading preview...</div>
+<iframe loading="lazy" title="Digaal preview"></iframe>
+</div>
+</div>
+</div>
+
 </section>
 
 <!-- =====================
@@ -1286,7 +1340,7 @@ FOOTER
 <div class="footer-container">
 
 <div class="footer-brand">
-<img src="images/logo.png" alt="Logo">
+<img src="images/logo.png" alt="Logo" loading="lazy" decoding="async">
 <p data-i18n="footer.tagline">
 I help businesses grow online through modern,
 fast and user-friendly websites tailored to
@@ -1534,8 +1588,8 @@ U Dir WhatsApp
 </svg>
 </div>
 
-<script src="script.js"></script>
-<script src="i18n.js"></script>
+<script defer src="script.js"></script>
+<script defer src="i18n.js"></script>
 
 </body>
 </html>
